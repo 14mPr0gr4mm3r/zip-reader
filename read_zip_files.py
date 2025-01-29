@@ -5,6 +5,7 @@ Zip Files Reader
 """
 
 import argparse
+import os
 
 from resources.parsers import get_eocd, get_central_directory_file_header
 from resources.parsers import get_file_of_central_directory
@@ -14,6 +15,8 @@ from resources.util import show_central_directory_file_header
 
 
 def expand_zip_file(file_path: str):
+    file_path = os.path.realpath(file_path)
+
     with open(file_path, "rb") as zip_file:
         file_content = zip_file.read()
         eocd = get_eocd(file_content)

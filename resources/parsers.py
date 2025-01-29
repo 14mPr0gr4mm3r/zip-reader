@@ -6,7 +6,7 @@ from typing import Optional, Union
 
 from .types import StreamLikeCharSequence, ZipEOCD
 from .types import ZipCentralDirFileHeader, ZipLocalFileHeader
-from .types import ZipCompressedFile
+from .types import ZipCompressedFile, ZipCompressionMethod
 
 from .types import END_OF_CENTRAL_DIR_SIGNAT, CENTRAL_DIR_FH_SIGNAT
 from .types import FILE_HEADER_SIGNAT, DATA_DESCRIPTOR_SIGNAT
@@ -28,7 +28,7 @@ def get_eocd(content: Union[str, bytes]):
     comment_length = int.from_bytes(footer_content.read(2), "little")
     comment = footer_content.read(comment_length)
 
-    return ZipEOCD(signature, disk_number, cd_start_disk_number,
+    return ZipEOCD(hex(signature), disk_number, cd_start_disk_number,
                    cd_record_count_on_disk, total_cd_record_count, cd_size,
                    cd_start_archive_offset, comment_length, comment)
 
@@ -61,8 +61,9 @@ def get_central_directory_file_header(content, signature_offset: Optional[int] =
     extra_field = header_content.read(extra_field_length)
     file_comment = header_content.read(file_comment_length)
 
-    return ZipCentralDirFileHeader(signature, version_made_by, version,
-                                   gp_bit_flag, compression_method, last_modification_time,
+    return ZipCentralDirFileHeader(hex(signature), version_made_by, version,
+                                   gp_bit_flag, ZipCompressionMethod(
+                                       compression_method), last_modification_time,
                                    last_modification_date, crc32, compressed_size,
                                    uncompressed_size, filename_length, extra_field_length,
                                    file_comment_length, disk_number, int_file_attributes,
@@ -88,8 +89,9 @@ def get_local_file_header(f):
     filename = f.read(filename_len)
     extra_field = f.read(extra_len)
 
-    return (ZipLocalFileHeader(file_header_signature, version, gp_bit_flag,
-                               compres_method, last_modif_time, last_modif_date,
+    return (ZipLocalFileHeader(hex(file_header_signature), version, gp_bit_flag,
+                               ZipCompressionMethod(
+                                   compres_method), last_modif_time, last_modif_date,
                                crc32, compres_size, uncompres_size,
                                filename_len, extra_len, filename,
                                extra_field), 30 + filename_len + extra_len)

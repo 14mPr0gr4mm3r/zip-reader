@@ -16,8 +16,8 @@ def show_eocd(eocd: ZipEOCD):
 def show_file_of_central_directory(file: ZipCompressedFile, tabs=0):
     print('\033[32m')
 
-    print('\t'*tabs, 'File Header Signature:',
-          hex(file.local_header.signature))
+    print('\t'*tabs, 'File Header Signature:', file.local_header.signature)
+    print('\t'*tabs, 'Version:', file.local_header.version / 10)
     print('\t'*tabs, 'GP Bit Flag:', file.local_header.gp_bit_flag)
     print('\t'*tabs, 'Compress. Method:', file.local_header.compression_method)
     print('\t'*tabs, 'Last Modified Time:',

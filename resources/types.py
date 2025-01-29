@@ -5,7 +5,7 @@ Zip Reader - Zip File Objects Types
 import zlib
 from zipfile import _get_decompressor as get_decompressor
 
-from typing import Union
+from typing import TypeVar, Union
 from dataclasses import dataclass
 from enum import Enum
 
@@ -14,15 +14,17 @@ DATA_DESCRIPTOR_SIGNAT = 0x08074b50
 CENTRAL_DIR_FH_SIGNAT = 0x02014b50
 END_OF_CENTRAL_DIR_SIGNAT = 0x06054b50
 
+T = TypeVar('T', str, bytes)
+
 
 class StreamLikeCharSequence():
-    def __init__(self, base_sequence: Union[str, bytes]):
+    def __init__(self, base_sequence: T):
         self.__charseq = base_sequence
 
     def __repr__(self):
         return repr(self.__charseq)
 
-    def read(self, length: int = -1) -> str:
+    def read(self, length: int = -1) -> T:
         value = self.__charseq[:length]
 
         self.__charseq = self.__charseq[length:]
@@ -37,7 +39,7 @@ class ZipCompressionMethod(Enum):
 
 @dataclass
 class ZipLocalFileHeader():
-    signature: int
+    signature: str
     version: int
     gp_bit_flag: int
     compression_method: ZipCompressionMethod
@@ -54,7 +56,7 @@ class ZipLocalFileHeader():
 
 @dataclass
 class ZipCentralDirFileHeader():
-    signature: int
+    signature: str
     version_made_by: int
     version: int
     gp_bit_flag: int
@@ -78,7 +80,7 @@ class ZipCentralDirFileHeader():
 
 @dataclass
 class ZipEOCD():
-    signature: int
+    signature: str
     disk_number: int
     central_directory_start_disk_number: int
     central_directory_record_count_on_disk: int
@@ -103,7 +105,7 @@ class ZipCompressedFile():
         self.compressed_size = compressed_size
         self.uncompressed_size = uncompressed_size
 
-        if self.local_header.compression_method == ZipCompressionMethod.DEFLATE.value:
+        if self.local_header.compression_method == ZipCompressionMethod.DEFLATE:
             self._decompress_data()
 
             try:
@@ -116,7 +118,8 @@ class ZipCompressedFile():
         self._validate_data()
 
     def _decompress_data(self):
-        decompressor = get_decompressor(self.local_header.compression_method)
+        decompressor = get_decompressor(
+            self.local_header.compression_method.value)
 
         self.uncompressed_data = decompressor.decompress(self.compressed_data)
 
@@ -124,7 +127,7 @@ class ZipCompressedFile():
         assert len(
             self.compressed_data) == self.compressed_size, f'compressed data length is {len(self.compressed_data)}, while the annotated uncompressed data length was {self.compressed_size}'
 
-        if self.local_header.compression_method == ZipCompressionMethod.DEFLATE.value or hasattr(self, 'uncompressed_data'):
+        if self.local_header.compression_method == ZipCompressionMethod.DEFLATE or hasattr(self, 'uncompressed_data'):
             assert len(
                 self.uncompressed_data) == self.uncompressed_size, f'uncompressed data length is {len(self.uncompressed_data)}, while the annotated uncompressed data length was {self.uncompressed_size}'
 
